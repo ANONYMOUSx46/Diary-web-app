@@ -156,24 +156,30 @@ class DiaryApp {
   renderEntries() {
     const container = document.getElementById('entries-container');
     container.innerHTML = '';
-    this.entries.forEach(entry => {
-      const card = document.createElement('div');
-      card.className = `entry-card theme-${entry.theme}`;
-      
-      const stickersHtml = entry.stickers ? 
-        `<div class="entry-stickers">${entry.stickers.join(' ')}</div>` : '';
-      
-      card.innerHTML = `
-        <h3>${entry.title}</h3>
-        <div class="entry-meta">
-          <span>${new Date(entry.date).toLocaleDateString()}</span>
-          <span>${entry.weather}</span>
-          ${entry.mood ? `<span class="mood">${this.getMoodEmoji(entry.mood)}</span>` : ''}
-        </div>
-        ${stickersHtml}
-        <p>${entry.content}</p>
-      `;
-      container.appendChild(card);
+    this.entries.forEach((entry, index) => {
+        const card = document.createElement('div');
+        card.className = `entry-card theme-${entry.theme}`;
+        
+        const stickersHtml = entry.stickers ? 
+            `<div class="entry-stickers">${entry.stickers.join(' ')}</div>` : '';
+        
+        card.innerHTML = `
+            <h3>${entry.title}</h3>
+            <div class="entry-meta">
+                <span>${new Date(entry.date).toLocaleDateString()}</span>
+                <span>${entry.weather}</span>
+                ${entry.mood ? `<span class="mood">${this.getMoodEmoji(entry.mood)}</span>` : ''}
+            </div>
+            ${stickersHtml}
+            <p>${entry.content}</p>
+            <button class="delete-btn" data-index="${index}">Delete</button>
+        `;
+        container.appendChild(card);
+    });
+
+    // Add event listeners for delete buttons
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', (e) => this.deleteEntry(e));
     });
   }
 
@@ -223,6 +229,20 @@ class DiaryApp {
   changeTheme(theme) {
     document.body.className = theme;
     localStorage.setItem('app-theme', theme);
+  }
+
+  deleteEntry(event) {
+    const index = parseInt(event.target.getAttribute('data-index'), 10);
+    if (index >= 0 && index < this.entries.length) {
+        // Remove the entry from the entries array
+        this.entries.splice(index, 1);
+        
+        // Update local storage
+        localStorage.setItem('diary-entries', JSON.stringify(this.entries));
+        
+        // Re-render the entries to reflect the changes
+        this.renderEntries();
+    }
   }
 }
 
