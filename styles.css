@@ -410,3 +410,27 @@ nav button {
     border: 1px solid #ddd;
   }
 }
+
+/* Delete Button Styles */
+.delete-btn {
+  background: #ff6b6b; /* Red color for delete action */
+  color: white;
+  border: none;
+  padding: clamp(0.6rem, 2vw, 1rem) clamp(1rem, 3vw, 2rem);
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.delete-btn:hover {
+  transform: translateY(-3px);
+  background: #ff4d4d; /* Darker red on hover */
+  box-shadow: var(--shadow-md);
+}
+
+.delete-btn:active {
+  transform: translateY(-1px);
+}
