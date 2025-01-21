@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -6,6 +7,10 @@
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+  <!-- Quill Editor CSS -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <!-- FullCalendar CSS -->
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet' />
 </head>
 <body>
   <div id="login-screen" class="screen active">
@@ -18,19 +23,17 @@
       <p id="first-time-msg" style="margin-top: 1rem; color: #666;">First time? Set your password!</p>
     </div>
   </div>
-
   <div id="main-screen" class="screen">
     <nav>
       <button id="settings-btn">⚙️ Settings</button>
       <h2 style="font-family: 'Dancing Script', cursive; color: var(--primary-color);">My Diary</h2>
       <div>
+        <input type="text" id="search-input" placeholder="Search entries...">
         <button id="new-entry-btn" style="margin-right: 1rem;">✏️ New Entry</button>
         <button id="logout-btn">🔒 Lock</button>
       </div>
     </nav>
-
     <div id="entries-container"></div>
-
     <div id="new-entry-modal" class="modal">
       <div class="modal-content">
         <h2 style="margin-bottom: 1.5rem; color: var(--primary-color); font-family: 'Dancing Script', cursive;">New Entry</h2>
@@ -48,7 +51,9 @@
             <button class="theme-btn" data-theme="sunset">🌅 Sunset</button>
           </div>
         </div>
-        <textarea id="entry-content" placeholder="Dear Diary...&#10;&#10;Today was..."></textarea>
+        <div id="editor-container">
+          <div id="entry-content" style="height: 200px;"></div>
+        </div>
         <div class="mood-selector">
           <span style="font-weight: 600;">Today I feel:</span>
           <button class="mood-btn" data-mood="happy">😊</button>
@@ -73,7 +78,6 @@
         </div>
       </div>
     </div>
-
     <div id="settings-modal" class="modal">
       <div class="modal-content">
         <h2 style="margin-bottom: 2rem; color: var(--primary-color); font-family: 'Dancing Script', cursive;">Settings</h2>
@@ -94,9 +98,13 @@
         <button id="close-settings" style="margin-top: 2rem;">Close</button>
       </div>
     </div>
+    <div id="calendar"></div>
   </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script type="module" src="app.js"></script>
+  <!-- Quill Editor JS -->
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <!-- FullCalendar JS -->
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
 </body>
 </html>
