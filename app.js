@@ -72,6 +72,90 @@ class DiaryApp {
     document.querySelectorAll('.sticker-btn').forEach(btn => {
       btn.addEventListener('click', (e) => this.toggleSticker(e.target));
     });
+
+    // Add event listener for edit button in entry card
+    document.getElementById('entries-container').addEventListener('click', (event) => {
+      if (event.target.classList.contains('edit-btn')) {
+        const index = parseInt(event.target.getAttribute('data-index'), 10);
+        if (index >= 0 && index < this.entries.length) {
+          this.editEntry(index);
+        }
+      }
+    });
+  }
+  
+  editEntry(index) {
+    const entry = this.entries[index];
+    document.getElementById('entry-title').value = entry.title;
+    document.getElementById('entry-content').value = entry.content;
+    document.querySelector(`.mood-btn[data-mood="${entry.mood}"]`).classList.add('selected');
+    entry.stickers.forEach(sticker => this.selectedStickers.add(sticker));
+    this.currentTheme = entry.theme;
+    this.showModal('new-entry-modal');
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.theme === entry.theme);
+    });
+    this.editingIndex = index; // Store the index of the entry being edited
+  }
+  
+  async saveEntry() {
+    const title = document.getElementById('entry-title').value;
+    const content = document.getElementById('entry-content').value;
+    const mood = document.querySelector('.mood-btn.selected')?.dataset.mood;
+    const stickers = Array.from(this.selectedStickers);
+    if (!title || !content) {
+      alert('Please fill in all fields!');
+      return;
+    }
+    const entryData = {
+      title,
+      content,
+      mood,
+      stickers,
+      theme: this.currentTheme,
+      date: new Date().toISOString(),
+      weather: document.getElementById('weather-info').textContent
+    };
+    if (this.editingIndex !== undefined) {
+      this.entries[this.editingIndex] = new DiaryEntry(entryData);
+      delete this.editingIndex; // Clear editing index after saving
+    } else {
+      this.entries.unshift(new DiaryEntry(entryData));
+    }
+    localStorage.setItem('diary-entries', JSON.stringify(this.entries));
+    this.hideModal('new-entry-modal');
+    this.renderEntries();
+    this.clearEntryForm();
+  }
+  
+  renderEntries() {
+    const container = document.getElementById('entries-container');
+    container.innerHTML = '';
+    this.entries.forEach((entry, index) => {
+      const card = document.createElement('div');
+      card.className = `entry-card theme-${entry.theme}`;
+      
+      const stickersHtml = entry.stickers ? 
+          `<div class="entry-stickers">${entry.stickers.join(' ')}</div>` : '';
+      
+      card.innerHTML = `
+          <h3>${entry.title}</h3>
+          <div class="entry-meta">
+              <span>${new Date(entry.date).toLocaleDateString()}</span>
+              <span>${entry.weather}</span>
+              ${entry.mood ? `<span class="mood">${this.getMoodEmoji(entry.mood)}</span>` : ''}
+          </div>
+          ${stickersHtml}
+          <p>${entry.content}</p>
+          <button class="edit-btn" data-index="${index}">Edit</button>
+          <button class="delete-btn" data-index="${index}">Delete</button>
+      `;
+      container.appendChild(card);
+    });
+    document.querySelectorAll('.delete-btn').forEach(button => {
+      button.addEventListener('click', (e) => this.deleteEntry(e));
+    });
+  }
   }
 
   async handleLogin() {
