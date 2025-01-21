@@ -11,6 +11,9 @@ class DiaryApp {
     this.setupEventListeners();
     this.init();
     this.selectedStickers = new Set();
+    this.quill = new Quill('#entry-content', {
+      theme: 'snow'
+    });
   }
 
   async init() {
@@ -40,6 +43,8 @@ class DiaryApp {
     } catch (error) {
       console.error('Weather fetch failed:', error);
     }
+
+    this.initCalendar();
   }
 
   setupEventListeners() {
@@ -50,27 +55,34 @@ class DiaryApp {
     document.getElementById('new-entry-btn').addEventListener('click', () => this.showModal('new-entry-modal'));
     document.getElementById('settings-btn').addEventListener('click', () => this.showModal('settings-modal'));
     document.getElementById('logout-btn').addEventListener('click', () => this.handleLogout());
-    
+
     // Entry creation
     document.getElementById('save-entry').addEventListener('click', () => this.saveEntry());
     document.getElementById('cancel-entry').addEventListener('click', () => this.hideModal('new-entry-modal'));
-    
+
     // Settings
     document.getElementById('change-password-btn').addEventListener('click', () => this.changePassword());
     document.getElementById('close-settings').addEventListener('click', () => this.hideModal('settings-modal'));
     document.getElementById('app-theme').addEventListener('change', (e) => this.changeTheme(e.target.value));
-    
+
     // Theme and sticker buttons
     document.querySelectorAll('.theme-btn').forEach(btn => {
       btn.addEventListener('click', () => this.setEntryTheme(btn.dataset.theme));
     });
+
     // Mood selection
     document.querySelectorAll('.mood-btn').forEach(btn => {
       btn.addEventListener('click', (e) => this.selectMood(e.target));
     });
+
     // Sticker selection
     document.querySelectorAll('.sticker-btn').forEach(btn => {
       btn.addEventListener('click', (e) => this.toggleSticker(e.target));
+    });
+
+    // Search functionality
+    document.getElementById('search-input').addEventListener('input', (event) => {
+      this.searchEntries(event.target.value);
     });
 
     // Add event listener for edit button in entry card
@@ -82,80 +94,6 @@ class DiaryApp {
         }
       }
     });
-  }
-  
-  editEntry(index) {
-    const entry = this.entries[index];
-    document.getElementById('entry-title').value = entry.title;
-    document.getElementById('entry-content').value = entry.content;
-    document.querySelector(`.mood-btn[data-mood="${entry.mood}"]`).classList.add('selected');
-    entry.stickers.forEach(sticker => this.selectedStickers.add(sticker));
-    this.currentTheme = entry.theme;
-    this.showModal('new-entry-modal');
-    document.querySelectorAll('.theme-btn').forEach(btn => {
-      btn.classList.toggle('selected', btn.dataset.theme === entry.theme);
-    });
-    this.editingIndex = index; // Store the index of the entry being edited
-  }
-  
-  async saveEntry() {
-    const title = document.getElementById('entry-title').value;
-    const content = document.getElementById('entry-content').value;
-    const mood = document.querySelector('.mood-btn.selected')?.dataset.mood;
-    const stickers = Array.from(this.selectedStickers);
-    if (!title || !content) {
-      alert('Please fill in all fields!');
-      return;
-    }
-    const entryData = {
-      title,
-      content,
-      mood,
-      stickers,
-      theme: this.currentTheme,
-      date: new Date().toISOString(),
-      weather: document.getElementById('weather-info').textContent
-    };
-    if (this.editingIndex !== undefined) {
-      this.entries[this.editingIndex] = new DiaryEntry(entryData);
-      delete this.editingIndex; // Clear editing index after saving
-    } else {
-      this.entries.unshift(new DiaryEntry(entryData));
-    }
-    localStorage.setItem('diary-entries', JSON.stringify(this.entries));
-    this.hideModal('new-entry-modal');
-    this.renderEntries();
-    this.clearEntryForm();
-  }
-  
-  renderEntries() {
-    const container = document.getElementById('entries-container');
-    container.innerHTML = '';
-    this.entries.forEach((entry, index) => {
-      const card = document.createElement('div');
-      card.className = `entry-card theme-${entry.theme}`;
-      
-      const stickersHtml = entry.stickers ? 
-          `<div class="entry-stickers">${entry.stickers.join(' ')}</div>` : '';
-      
-      card.innerHTML = `
-          <h3>${entry.title}</h3>
-          <div class="entry-meta">
-              <span>${new Date(entry.date).toLocaleDateString()}</span>
-              <span>${entry.weather}</span>
-              ${entry.mood ? `<span class="mood">${this.getMoodEmoji(entry.mood)}</span>` : ''}
-          </div>
-          ${stickersHtml}
-          <p>${entry.content}</p>
-          <button class="edit-btn" data-index="${index}">Edit</button>
-          <button class="delete-btn" data-index="${index}">Delete</button>
-      `;
-      container.appendChild(card);
-    });
-    document.querySelectorAll('.delete-btn').forEach(button => {
-      button.addEventListener('click', (e) => this.deleteEntry(e));
-    });
-  }
   }
 
   async handleLogin() {
@@ -213,14 +151,14 @@ class DiaryApp {
 
   async saveEntry() {
     const title = document.getElementById('entry-title').value;
-    const content = document.getElementById('entry-content').value;
+    const content = this.quill.root.innerHTML; // Get Quill editor content
     const mood = document.querySelector('.mood-btn.selected')?.dataset.mood;
     const stickers = Array.from(this.selectedStickers);
     if (!title || !content) {
       alert('Please fill in all fields!');
       return;
     }
-    const entry = new DiaryEntry({
+    const entryData = {
       title,
       content,
       mood,
@@ -228,10 +166,14 @@ class DiaryApp {
       theme: this.currentTheme,
       date: new Date().toISOString(),
       weather: document.getElementById('weather-info').textContent
-    });
-    this.entries.unshift(entry);
+    };
+    if (this.editingIndex !== undefined) {
+      this.entries[this.editingIndex] = new DiaryEntry(entryData);
+      delete this.editingIndex; // Clear editing index after saving
+    } else {
+      this.entries.unshift(new DiaryEntry(entryData));
+    }
     localStorage.setItem('diary-entries', JSON.stringify(this.entries));
-    
     this.hideModal('new-entry-modal');
     this.renderEntries();
     this.clearEntryForm();
@@ -241,29 +183,28 @@ class DiaryApp {
     const container = document.getElementById('entries-container');
     container.innerHTML = '';
     this.entries.forEach((entry, index) => {
-        const card = document.createElement('div');
-        card.className = `entry-card theme-${entry.theme}`;
-        
-        const stickersHtml = entry.stickers ? 
-            `<div class="entry-stickers">${entry.stickers.join(' ')}</div>` : '';
-        
-        card.innerHTML = `
-            <h3>${entry.title}</h3>
-            <div class="entry-meta">
-                <span>${new Date(entry.date).toLocaleDateString()}</span>
-                <span>${entry.weather}</span>
-                ${entry.mood ? `<span class="mood">${this.getMoodEmoji(entry.mood)}</span>` : ''}
-            </div>
-            ${stickersHtml}
-            <p>${entry.content}</p>
-            <button class="delete-btn" data-index="${index}">Delete</button>
-        `;
-        container.appendChild(card);
+      const card = document.createElement('div');
+      card.className = `entry-card theme-${entry.theme}`;
+      
+      const stickersHtml = entry.stickers ? 
+          `<div class="entry-stickers">${entry.stickers.join(' ')}</div>` : '';
+      
+      card.innerHTML = `
+          <h3>${entry.title}</h3>
+          <div class="entry-meta">
+              <span>${new Date(entry.date).toLocaleDateString()}</span>
+              <span>${entry.weather}</span>
+              ${entry.mood ? `<span class="mood">${this.getMoodEmoji(entry.mood)}</span>` : ''}
+          </div>
+          ${stickersHtml}
+          <div class="entry-content">${entry.content}</div>
+          <button class="edit-btn" data-index="${index}">Edit</button>
+          <button class="delete-btn" data-index="${index}">Delete</button>
+      `;
+      container.appendChild(card);
     });
-
-    // Add event listeners for delete buttons
     document.querySelectorAll('.delete-btn').forEach(button => {
-        button.addEventListener('click', (e) => this.deleteEntry(e));
+      button.addEventListener('click', (e) => this.deleteEntry(e));
     });
   }
 
@@ -279,7 +220,7 @@ class DiaryApp {
 
   clearEntryForm() {
     document.getElementById('entry-title').value = '';
-    document.getElementById('entry-content').value = '';
+    this.quill.root.innerHTML = ''; // Clear Quill editor content
     document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('selected'));
     document.querySelectorAll('.sticker-btn').forEach(btn => btn.classList.remove('selected'));
     this.selectedStickers.clear();
@@ -328,22 +269,78 @@ class DiaryApp {
         this.renderEntries();
     }
   }
+
+  editEntry(index) {
+    const entry = this.entries[index];
+    document.getElementById('entry-title').value = entry.title;
+    this.quill.root.innerHTML = entry.content; // Set Quill editor content
+    document.querySelector(`.mood-btn[data-mood="${entry.mood}"]`).classList.add('selected');
+    entry.stickers.forEach(sticker => this.selectedStickers.add(sticker));
+    this.currentTheme = entry.theme;
+    this.showModal('new-entry-modal');
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.theme === entry.theme);
+    });
+    this.editingIndex = index; // Store the index of the entry being edited
+  }
+
+  searchEntries(query) {
+    const filteredEntries = this.entries.filter(entry => 
+      entry.title.toLowerCase().includes(query.toLowerCase()) || 
+      entry.content.toLowerCase().includes(query.toLowerCase())
+    );
+    this.renderFilteredEntries(filteredEntries);
+  }
+
+  renderFilteredEntries(entries) {
+    const container = document.getElementById('entries-container');
+    container.innerHTML = '';
+    entries.forEach((entry, index) => {
+      const card = document.createElement('div');
+      card.className = `entry-card theme-${entry.theme}`;
+      
+      const stickersHtml = entry.stickers ? 
+          `<div class="entry-stickers">${entry.stickers.join(' ')}</div>` : '';
+      
+      card.innerHTML = `
+          <h3>${entry.title}</h3>
+          <div class="entry-meta">
+              <span>${new Date(entry.date).toLocaleDateString()}</span>
+              <span>${entry.weather}</span>
+              ${entry.mood ? `<span class="mood">${this.getMoodEmoji(entry.mood)}</span>` : ''}
+          </div>
+          ${stickersHtml}
+          <p>${entry.content}</p>
+          <button class="edit-btn" data-index="${index}">Edit</button>
+          <button class="delete-btn" data-index="${index}">Delete</button>
+      `;
+      container.appendChild(card);
+    });
+    document.querySelectorAll('.delete-btn').forEach(button => {
+      button.addEventListener('click', (e) => this.deleteEntry(e));
+    });
+  }
+
+  initCalendar() {
+    document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendar');
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events: this.getCalendarEvents()
+      });
+      calendar.render();
+    }.bind(this));
+  }
+
+  getCalendarEvents() {
+    return this.entries.map(entry => ({
+      title: entry.title,
+      start: new Date(entry.date)
+    }));
+  }
 }
 
 // Initialize app
 window.addEventListener('DOMContentLoaded', () => {
   new DiaryApp();
 });
-
-// Register the service worker
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-            .then(registration => {
-                console.log('Service Worker registered with scope:', registration.scope);
-            })
-            .catch(error => {
-                console.error('Service Worker registration failed:', error);
-            });
-    });
-}
