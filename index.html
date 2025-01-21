@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Secret Diary</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+  <!-- Quill Editor CSS -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <!-- FullCalendar CSS -->
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet' />
+</head>
+<body>
+  <div id="login-screen" class="screen active">
+    <div class="diary-cover">
+      <h1>My Secret Diary</h1>
+      <div class="lock">
+        <input type="password" id="password" placeholder="✨ Enter your password">
+        <button id="unlock-btn">🔓 Unlock</button>
+      </div>
+      <p id="first-time-msg" style="margin-top: 1rem; color: #666;">First time? Set your password!</p>
+    </div>
+  </div>
+  <div id="main-screen" class="screen">
+    <nav>
+      <button id="settings-btn">⚙️ Settings</button>
+      <h2 style="font-family: 'Dancing Script', cursive; color: var(--primary-color);">My Diary</h2>
+      <div>
+        <input type="text" id="search-input" placeholder="Search entries...">
+        <button id="new-entry-btn" style="margin-right: 1rem;">✏️ New Entry</button>
+        <button id="logout-btn">🔒 Lock</button>
+      </div>
+    </nav>
+    <div id="entries-container"></div>
+    <div id="new-entry-modal" class="modal">
+      <div class="modal-content">
+        <h2 style="margin-bottom: 1.5rem; color: var(--primary-color); font-family: 'Dancing Script', cursive;">New Entry</h2>
+        <div class="entry-header">
+          <input type="text" id="entry-title" placeholder="✨ Title your memory...">
+          <div class="entry-meta">
+            <span id="current-date"></span>
+            <span id="weather-info"></span>
+          </div>
+        </div>
+        <div class="entry-customization">
+          <div class="theme-selector">
+            <button class="theme-btn" data-theme="default">🌸 Sweet</button>
+            <button class="theme-btn" data-theme="ocean">🌊 Ocean</button>
+            <button class="theme-btn" data-theme="sunset">🌅 Sunset</button>
+          </div>
+        </div>
+        <div id="editor-container">
+          <div id="entry-content" style="height: 200px;"></div>
+        </div>
+        <div class="mood-selector">
+          <span style="font-weight: 600;">Today I feel:</span>
+          <button class="mood-btn" data-mood="happy">😊</button>
+          <button class="mood-btn" data-mood="sad">😢</button>
+          <button class="mood-btn" data-mood="excited">🤗</button>
+          <button class="mood-btn" data-mood="tired">😴</button>
+        </div>
+        <div class="sticker-selector">
+          <span style="font-weight: 600;">Add stickers:</span>
+          <button class="sticker-btn">🦋</button>
+          <button class="sticker-btn">🌟</button>
+          <button class="sticker-btn">🌈</button>
+          <button class="sticker-btn">💖</button>
+          <button class="sticker-btn">🌸</button>
+          <button class="sticker-btn">✨</button>
+          <button class="sticker-btn">🎀</button>
+          <button class="sticker-btn">🌺</button>
+        </div>
+        <div class="entry-actions">
+          <button id="cancel-entry" style="background: #999;">Cancel</button>
+          <button id="save-entry">Save Entry</button>
+        </div>
+      </div>
+    </div>
+    <div id="settings-modal" class="modal">
+      <div class="modal-content">
+        <h2 style="margin-bottom: 2rem; color: var(--primary-color); font-family: 'Dancing Script', cursive;">Settings</h2>
+        <div class="settings-section">
+          <h3>Change Password</h3>
+          <input type="password" id="current-password" placeholder="Current Password" style="width: 100%; padding: 1rem; margin: 0.5rem 0; border-radius: 12px; border: 2px solid var(--secondary-color);">
+          <input type="password" id="new-password" placeholder="New Password" style="width: 100%; padding: 1rem; margin: 0.5rem 0; border-radius: 12px; border: 2px solid var(--secondary-color);">
+          <button id="change-password-btn" style="margin-top: 1rem;">Update Password</button>
+        </div>
+        <div class="settings-section">
+          <h3>Theme</h3>
+          <select id="app-theme" style="width: 100%; padding: 1rem; border-radius: 12px; border: 2px solid var(--secondary-color); margin-top: 0.5rem;">
+            <option value="default">Sweet Pink</option>
+            <option value="ocean">Ocean Breeze</option>
+            <option value="sunset">Warm Sunset</option>
+          </select>
+        </div>
+        <button id="close-settings" style="margin-top: 2rem;">Close</button>
+      </div>
+    </div>
+    <div id="calendar"></div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="/dist/bundle.js"></script> <!-- Reference the bundled JS file -->
+  <!-- Quill Editor JS -->
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <!-- FullCalendar JS -->
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
+</body>
+</html>
