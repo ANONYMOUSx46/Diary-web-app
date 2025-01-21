@@ -1,9 +1,9 @@
 export class WeatherService {
   constructor() {
-    this.apiKey = 'YOUR_OPENWEATHER_API_KEY'; // Replace with your API key
+    this.apiKey = 'YOUR_OPENWEATHER_API_KEY'; // Replace with your actual API key
     this.baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
   }
-  
+
   async getCurrentWeather() {
     if (this.apiKey === 'YOUR_OPENWEATHER_API_KEY') {
       return this.getMockWeather();
@@ -11,17 +11,17 @@ export class WeatherService {
     try {
       const position = await this.getCurrentPosition();
       const { latitude, longitude } = position.coords;
-      
+
       const response = await fetch(
         `${this.baseUrl}?lat=${latitude}&lon=${longitude}&units=metric&appid=${this.apiKey}`
       );
-      
+
       if (!response.ok) {
         throw new Error(`Weather API request failed with status ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       return {
         temp: Math.round(data.main.temp),
         description: data.weather[0].description
@@ -31,13 +31,13 @@ export class WeatherService {
       return this.getMockWeather();
     }
   }
-  
+
   getCurrentPosition() {
     return new Promise((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(resolve, reject);
     });
   }
-  
+
   getMockWeather() {
     const mockWeathers = [
       { temp: 22, description: 'sunny' },
